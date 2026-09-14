@@ -522,11 +522,6 @@ select:focus {
     font-size: 20px;
   }
 
-  .meta {
-    width: 100%;
-    overflow-wrap: anywhere;
-  }
-
   .metrics {
     grid-template-columns: 1fr 1fr;
   }

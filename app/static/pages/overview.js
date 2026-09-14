@@ -15,11 +15,6 @@ async function load() {
     document.getElementById("m-week").textContent = fmtBytes(data.week_bytes);
     document.getElementById("m-month").textContent = fmtBytes(data.month_bytes);
     document.getElementById("m-total").textContent = fmtBytes(data.total_bytes);
-    const ok = data.collector.last_ok_at
-      ? new Date(data.collector.last_ok_at).toLocaleString()
-      : "never";
-    document.getElementById("collector-meta").textContent =
-      `auto ${REFRESH_MS / 1000}s · last ${ok} · days in ${data.collector.timezone}`;
 
     const online = data.clients.filter((c) => c.online);
     const list = document.getElementById("online-list");
