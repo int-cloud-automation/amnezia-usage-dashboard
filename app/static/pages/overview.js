@@ -32,11 +32,13 @@ async function load() {
           .join("")
       : `<li class="muted">Nobody online</li>`;
 
-    document.getElementById("clients-body").innerHTML = data.clients
+    const rows = data.clients
       .slice()
       .sort(
         (a, b) =>
-          b.lifetime_rx + b.lifetime_tx - (a.lifetime_rx + a.lifetime_tx)
+          Number(b.lifetime_rx || 0) +
+          Number(b.lifetime_tx || 0) -
+          (Number(a.lifetime_rx || 0) + Number(a.lifetime_tx || 0))
       )
       .map((c) => {
         const down = c.status === "online" ? fmtRate(c.down_bps) : "—";
@@ -52,14 +54,25 @@ async function load() {
         </tr>`;
       })
       .join("");
+    document.getElementById("clients-body").innerHTML =
+      rows || `<tr><td colspan="7" class="muted">No clients yet</td></tr>`;
 
-    if (chart) chart.destroy();
-    chart = trafficChart(
-      document.getElementById("traffic-chart"),
-      data.series || []
-    );
+    try {
+      if (chart) chart.destroy();
+      chart = trafficChart(
+        document.getElementById("traffic-chart"),
+        data.series || []
+      );
+    } catch (chartErr) {
+      console.error(chartErr);
+    }
   } catch (e) {
     console.error(e);
+    const box = document.getElementById("error");
+    if (box) {
+      box.hidden = false;
+      box.textContent = e.message || String(e);
+    }
   }
 }
 

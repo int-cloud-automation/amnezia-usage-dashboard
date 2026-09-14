@@ -26,7 +26,9 @@ from .db import Database
 log = logging.getLogger("awg-stats")
 
 BASE_DIR = Path(__file__).resolve().parent
+ASSET_VERSION = "3"
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+templates.env.globals["asset_v"] = ASSET_VERSION
 
 VALID_PERIODS = {"day", "week", "month", "total"}
 
@@ -77,6 +79,18 @@ def create_app() -> FastAPI:
         same_site="lax",
         https_only=settings.session_https_only,
     )
+
+    @app.middleware("http")
+    async def cache_headers(request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+        if path.startswith("/static/") or path == "/favicon.ico":
+            response.headers.setdefault(
+                "Cache-Control", "public, max-age=31536000, immutable"
+            )
+        elif "text/html" in response.headers.get("content-type", ""):
+            response.headers["Cache-Control"] = "no-store"
+        return response
 
     app.state.settings = settings
     app.state.db = db
