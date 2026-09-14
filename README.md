@@ -19,7 +19,14 @@ Numbers are from the **client's** side (downloaded / uploaded). A peer is online
 
 You can put the UI on a public hostname (HTTPS via Caddy/Cloudflare) or keep it on the LAN / the VPN only.
 
-An agent (Cursor, Codex, etc.) can install it unattended: give it shell access to the Amnezia host and say **follow `AGENT_INSTALL.md`**.
+## Install with an AI
+
+> [!IMPORTANT]
+> Give any coding agent (Cursor, Codex, Claude, …) **shell access to the Amnezia host** and:
+>
+> **Follow [`AGENT_INSTALL.md`](AGENT_INSTALL.md).**
+>
+> It finds the AmneziaWG container, generates secrets, and starts Docker Compose. Default is LAN-only (not the public internet). Do **not** rename the Amnezia container.
 
 ## Screenshots
 
