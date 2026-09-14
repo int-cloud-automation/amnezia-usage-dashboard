@@ -54,7 +54,9 @@ class Collector:
             await asyncio.sleep(self.settings.online_poll_sec)
 
     async def poll_once(self) -> None:
-        await self._collect()
+        # Re-read Amnezia names every tick so a rename in the desktop app
+        # shows up on the next Overview refresh, not after the 5 min cache.
+        await self._collect(force_refresh_names=True)
 
     async def scrape_once(self) -> None:
         # Manual refresh / startup: reload names from Amnezia and always persist.
@@ -99,13 +101,11 @@ class Collector:
             "down_bps": round(tx_bps, 1),
         }
 
-    def _learned_real_name(self, peers: list[PeerSnapshot]) -> bool:
+    def _names_changed(self, peers: list[PeerSnapshot]) -> bool:
         previous = {p["public_key"]: p.get("name") for p in self.latest_peers}
-        return any(
-            previous.get(p.public_key) == p.public_key[:8]
-            and p.name != p.public_key[:8]
-            for p in peers
-        )
+        if not previous:
+            return False
+        return any(previous.get(p.public_key) != p.name for p in peers)
 
     async def _collect(
         self, *, force_persist: bool = False, force_refresh_names: bool = False
@@ -132,9 +132,9 @@ class Collector:
         scheduled = (
             now_ts - self._last_persist_at >= self.settings.scrape_interval_sec
         )
-        # Persist off-schedule once we finally learn a client's real name.
+        # Persist off-schedule when a client is renamed in Amnezia.
         should_persist = (
-            force_persist or scheduled or self._learned_real_name(result.peers)
+            force_persist or scheduled or self._names_changed(result.peers)
         )
 
         self.latest_peers = latest
