@@ -6,7 +6,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from fastapi import FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -88,6 +88,13 @@ def create_app() -> FastAPI:
         StaticFiles(directory=str(BASE_DIR / "static")),
         name="static",
     )
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def favicon():
+        return FileResponse(
+            BASE_DIR / "static" / "favicon.png",
+            media_type="image/png",
+        )
 
     async def _clients_with_disabled() -> list[dict]:
         live = collector.latest_peers
