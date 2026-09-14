@@ -3,8 +3,14 @@ let chart;
 async function load() {
   const days = Number(document.getElementById("days").value);
   const data = await api(`/api/history?days=${days}`);
+  const range = `${days} days`;
+  document.getElementById("th-down-range").textContent = `Downloaded · ${range}`;
+  document.getElementById("th-up-range").textContent = `Uploaded · ${range}`;
+  document.getElementById("th-sum-range").textContent = `Total · ${range}`;
+  document.getElementById("th-share").textContent = `Share of ${range}`;
   document.getElementById("note").textContent =
-    data.note || "Period = recorded by this panel. Lifetime = total since the peer was created.";
+    data.note ||
+    `${range} = what this panel recorded. All time = since the client first appeared.`;
 
   if (chart) chart.destroy();
   chart = trafficChart(document.getElementById("chart"), data.series || [], {

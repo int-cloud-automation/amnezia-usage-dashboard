@@ -26,7 +26,7 @@ from .db import Database
 log = logging.getLogger("awg-stats")
 
 BASE_DIR = Path(__file__).resolve().parent
-ASSET_VERSION = "3"
+ASSET_VERSION = "6"
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["asset_v"] = ASSET_VERSION
 
@@ -302,9 +302,9 @@ def create_app() -> FastAPI:
             "by_client": by_client,
             "since": start.isoformat(),
             "note": (
-                "Period = traffic recorded by this panel. "
-                "Lifetime = all traffic since the peer first appeared "
-                "(survives AWG restarts). "
+                "The 7 / 30 / 90 day columns are what this panel recorded. "
+                "All time is since the client first appeared "
+                "(survives AmneziaWG restarts). "
                 f"Days follow {settings.stats_timezone} midnight."
             ),
         }

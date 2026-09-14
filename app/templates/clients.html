@@ -7,20 +7,22 @@
 </div>
 <div id="error" class="error-banner" hidden></div>
 <section class="panel">
+  <div class="table-scroll">
   <table class="data">
     <thead>
       <tr>
         <th>Name</th>
         <th>Status</th>
         <th>Allowed IPs</th>
-        <th>Downloaded (total)</th>
-        <th>Uploaded (total)</th>
-        <th>Handshake</th>
+        <th>Downloaded · all time</th>
+        <th>Uploaded · all time</th>
+        <th>Last handshake</th>
         <th></th>
       </tr>
     </thead>
     <tbody id="body"></tbody>
   </table>
+  </div>
 </section>
 {% endblock %}
 {% block scripts %}

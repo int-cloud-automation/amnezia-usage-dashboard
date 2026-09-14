@@ -12,26 +12,28 @@
   </label>
 </div>
 <section class="panel" style="margin-bottom:12px">
-  <h2>Aggregate traffic <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(period recorded by panel)</span></h2>
+  <h2>Traffic in this range</h2>
   <div class="chart-wrap"><canvas id="chart"></canvas></div>
 </section>
 <section class="panel">
   <h2>By client</h2>
   <p id="note" class="muted" style="margin:0 0 12px"></p>
+  <div class="table-scroll">
   <table class="data">
     <thead>
       <tr>
         <th>Name</th>
-        <th>Downloaded (period)</th>
-        <th>Uploaded (period)</th>
-        <th>Period total</th>
-        <th>Downloaded (total)</th>
-        <th>Uploaded (total)</th>
-        <th>Share</th>
+        <th id="th-down-range">Downloaded · 30 days</th>
+        <th id="th-up-range">Uploaded · 30 days</th>
+        <th id="th-sum-range">Total · 30 days</th>
+        <th>Downloaded · all time</th>
+        <th>Uploaded · all time</th>
+        <th id="th-share">Share of 30 days</th>
       </tr>
     </thead>
     <tbody id="body"></tbody>
   </table>
+  </div>
 </section>
 {% endblock %}
 {% block scripts %}
