@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}History · Slate{% endblock %}
+{% block content %}
+<div class="topbar">
+  <h1>History</h1>
+  <label class="field">Range
+    <select id="days">
+      <option value="7">7 days</option>
+      <option value="30" selected>30 days</option>
+      <option value="90">90 days</option>
+    </select>
+  </label>
+</div>
+<section class="panel" style="margin-bottom:12px">
+  <h2>Aggregate traffic <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(period recorded by panel)</span></h2>
+  <div class="chart-wrap"><canvas id="chart"></canvas></div>
+</section>
+<section class="panel">
+  <h2>By client</h2>
+  <p id="note" class="muted" style="margin:0 0 12px"></p>
+  <table class="data">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Downloaded (period)</th>
+        <th>Uploaded (period)</th>
+        <th>Period total</th>
+        <th>Downloaded (total)</th>
+        <th>Uploaded (total)</th>
+        <th>Share</th>
+      </tr>
+    </thead>
+    <tbody id="body"></tbody>
+  </table>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/pages/history.js" defer></script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Quotas · Slate{% endblock %}
+{% block content %}
+<div class="topbar">
+  <h1>Quotas</h1>
+</div>
+<div id="error" class="error-banner" hidden></div>
+<section class="panel" style="margin-bottom:12px">
+  <h2>Add / update quota</h2>
+  <form class="form-row" id="quota-form">
+    <label class="field">Client
+      <select id="peer" required></select>
+    </label>
+    <label class="field">Limit (GB)
+      <input id="limit" type="number" min="0.1" step="0.1" value="50" required />
+    </label>
+    <label class="field">Period
+      <select id="period">
+        <option value="day">Today</option>
+        <option value="week">Rolling 7 days</option>
+        <option value="month" selected>Calendar month</option>
+        <option value="total">Lifetime</option>
+      </select>
+    </label>
+    <label class="field">Auto-disable
+      <select id="auto">
+        <option value="1" selected>Yes</option>
+        <option value="0">No</option>
+      </select>
+    </label>
+    <button class="btn primary" type="submit">Save</button>
+  </form>
+  <p class="muted">When usage hits the limit, the peer is removed from the live AmneziaWG interface. It is re-enabled automatically when the period resets and usage is under the limit again — a peer you disabled by hand stays disabled.</p>
+</section>
+<section class="panel">
+  <h2>Active quotas</h2>
+  <table class="data">
+    <thead>
+      <tr>
+        <th>Client</th>
+        <th>Period</th>
+        <th>Used</th>
+        <th>Limit</th>
+        <th>Progress</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="body"></tbody>
+  </table>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/pages/quotas.js" defer></script>
+{% endblock %}

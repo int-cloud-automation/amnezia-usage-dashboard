@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login · Slate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <h1>Slate</h1>
+      <p>AmneziaWG usage dashboard</p>
+      {% if error %}
+      <div class="error-banner">{{ error }}</div>
+      {% endif %}
+      <form method="post" action="/login">
+        <label class="field">Username
+          <input name="username" autocomplete="username" required autofocus />
+        </label>
+        <label class="field">Password
+          <input name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <button class="btn primary" type="submit">Sign in</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

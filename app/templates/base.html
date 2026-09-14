@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Slate{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/vendor/chart.umd.min.js" defer></script>
+  <script src="/static/app.js" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail">
+      <div class="brand">Slate</div>
+      <nav class="nav">
+        <a href="/" class="{{ 'active' if active == 'overview' else '' }}">Overview</a>
+        <a href="/clients" class="{{ 'active' if active == 'clients' else '' }}">Clients</a>
+        <a href="/history" class="{{ 'active' if active == 'history' else '' }}">History</a>
+        <a href="/quotas" class="{{ 'active' if active == 'quotas' else '' }}">Quotas</a>
+      </nav>
+      <form method="post" action="/logout" style="margin-top:auto">
+        <button class="btn sm" type="submit">Log out</button>
+      </form>
+    </aside>
+    <main class="main">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

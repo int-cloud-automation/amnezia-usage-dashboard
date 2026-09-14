@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Overview · Slate{% endblock %}
+{% block content %}
+<div class="topbar">
+  <h1>Overview</h1>
+  <div class="meta" id="collector-meta">—</div>
+</div>
+<div id="error" class="error-banner" hidden></div>
+<div class="metrics">
+  <div class="metric"><div class="label">Online</div><div class="value accent" id="m-online">—</div></div>
+  <div class="metric"><div class="label">Today</div><div class="value" id="m-today">—</div></div>
+  <div class="metric"><div class="label">Last 7 days</div><div class="value" id="m-week">—</div></div>
+  <div class="metric"><div class="label">This month</div><div class="value" id="m-month">—</div></div>
+  <div class="metric"><div class="label">Total</div><div class="value" id="m-total">—</div></div>
+</div>
+<div class="grid-2">
+  <section class="panel">
+    <h2>Traffic · 30 days</h2>
+    <div class="chart-wrap"><canvas id="traffic-chart"></canvas></div>
+  </section>
+  <section class="panel">
+    <h2>Who is online</h2>
+    <ul class="online-list" id="online-list"></ul>
+  </section>
+</div>
+<section class="panel">
+  <h2>Clients <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(from the client's point of view)</span></h2>
+  <table class="data">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Speed ↓</th>
+        <th>Speed ↑</th>
+        <th>Downloaded (total)</th>
+        <th>Uploaded (total)</th>
+        <th>Handshake</th>
+      </tr>
+    </thead>
+    <tbody id="clients-body"></tbody>
+  </table>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/pages/overview.js" defer></script>
+{% endblock %}

@@ -1,0 +1,97 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # Narrow gateway to the Docker API: the panel may inspect containers and run
+  # `awg show` inside the AmneziaWG container, nothing else.
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    container_name: awg-stats-socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      EXEC: 1
+      POST: 1
+      VERSION: 1
+      # everything below stays denied
+      IMAGES: 0
+      NETWORKS: 0
+      VOLUMES: 0
+      SERVICES: 0
+      SWARM: 0
+      SECRETS: 0
+      CONFIGS: 0
+      NODES: 0
+      TASKS: 0
+      PLUGINS: 0
+      SYSTEM: 0
+      INFO: 0
+      AUTH: 0
+      BUILD: 0
+      COMMIT: 0
+      DISTRIBUTION: 0
+      SESSION: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - awg_stats_net
+    logging: *default-logging
+
+  awg-stats:
+    build: .
+    container_name: awg-stats
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+      AWG_MODE: ${AWG_MODE:-docker_exec}
+      AWG_CONTAINER: ${AWG_CONTAINER:-amnezia-awg2}
+      AWG_SHOW_CMD: ${AWG_SHOW_CMD:-awg show all dump}
+      AWG_CONF_PATH: ${AWG_CONF_PATH:-/opt/amnezia/awg/awg0.conf}
+      AWG_CLIENTS_TABLE: ${AWG_CLIENTS_TABLE:-/opt/amnezia/awg/clientsTable}
+      AWG_INTERFACE: ${AWG_INTERFACE:-awg0}
+      SCRAPE_INTERVAL_SEC: ${SCRAPE_INTERVAL_SEC:-60}
+      ONLINE_POLL_SEC: ${ONLINE_POLL_SEC:-30}
+      STATS_TIMEZONE: ${STATS_TIMEZONE:-UTC}
+      DATABASE_PATH: /data/awg_stats.db
+    volumes:
+      - awg_stats_data:/data
+    depends_on:
+      - docker-socket-proxy
+    expose:
+      - "8080"
+    networks:
+      - awg_stats_net
+    logging: *default-logging
+
+  # Origin for Cloudflare. Ports 80/443 are firewalled to Cloudflare ranges
+  # by cf-firewall.service. VPN / AmneziaWG ports are NOT touched.
+  caddy:
+    image: caddy:2-alpine
+    container_name: awg-stats-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - awg-stats
+    networks:
+      - awg_stats_net
+    logging: *default-logging
+
+volumes:
+  awg_stats_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  awg_stats_net:
+    name: awg_stats_net

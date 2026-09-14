@@ -1,0 +1,21 @@
+{
+	# Origin TLS is optional. Cloudflare (or any reverse proxy) can terminate
+	# HTTPS in front and talk to this container over HTTP or HTTPS.
+	auto_https disable_redirects
+}
+
+# Replace stats.example.com with your hostname.
+http://stats.example.com, https://stats.example.com {
+	tls internal
+
+	reverse_proxy awg-stats:8080
+	encode gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		X-Frame-Options DENY
+		Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
+		-Server
+	}
+}

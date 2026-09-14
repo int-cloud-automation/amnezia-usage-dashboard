@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Clients · Slate{% endblock %}
+{% block content %}
+<div class="topbar">
+  <h1>Clients</h1>
+  <button class="btn sm" id="btn-refresh" type="button">Refresh scrape</button>
+</div>
+<div id="error" class="error-banner" hidden></div>
+<section class="panel">
+  <table class="data">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Allowed IPs</th>
+        <th>Downloaded (total)</th>
+        <th>Uploaded (total)</th>
+        <th>Handshake</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="body"></tbody>
+  </table>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/pages/clients.js" defer></script>
+{% endblock %}
