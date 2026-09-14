@@ -16,7 +16,24 @@ async function load() {
     document.getElementById("m-month").textContent = fmtBytes(data.month_bytes);
     document.getElementById("m-total").textContent = fmtBytes(data.total_bytes);
 
-    const online = data.clients.filter((c) => c.online);
+    const byStatus = (a, b) => {
+      const rank = (c) => {
+        if (c.disabled) return 3;
+        const st = c.status || (c.online ? "online" : "offline");
+        if (st === "online") return 0;
+        if (st === "idle") return 1;
+        return 2;
+      };
+      const traffic = (c) =>
+        Number(c.lifetime_rx || 0) + Number(c.lifetime_tx || 0);
+      return (
+        rank(a) - rank(b) ||
+        traffic(b) - traffic(a) ||
+        String(a.name || "").localeCompare(String(b.name || ""))
+      );
+    };
+
+    const online = data.clients.filter((c) => c.online).sort(byStatus);
     const list = document.getElementById("online-list");
     list.innerHTML = online.length
       ? online
@@ -29,12 +46,7 @@ async function load() {
 
     const rows = data.clients
       .slice()
-      .sort(
-        (a, b) =>
-          Number(b.lifetime_rx || 0) +
-          Number(b.lifetime_tx || 0) -
-          (Number(a.lifetime_rx || 0) + Number(a.lifetime_tx || 0))
-      )
+      .sort(byStatus)
       .map((c) => {
         const down = c.status === "online" ? fmtRate(c.down_bps) : "—";
         const up = c.status === "online" ? fmtRate(c.up_bps) : "—";

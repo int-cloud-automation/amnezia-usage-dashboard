@@ -26,7 +26,7 @@ from .db import Database
 log = logging.getLogger("awg-stats")
 
 BASE_DIR = Path(__file__).resolve().parent
-ASSET_VERSION = "7"
+ASSET_VERSION = "8"
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["asset_v"] = ASSET_VERSION
 
