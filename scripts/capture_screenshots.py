@@ -1,4 +1,4 @@
-"""Capture demo-mode screenshots for the README. Requires a running Slate instance."""
+"""Capture demo-mode screenshots for the README. Requires a running dashboard instance."""
 
 from pathlib import Path
 

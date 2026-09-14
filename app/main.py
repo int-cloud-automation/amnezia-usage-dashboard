@@ -68,7 +68,7 @@ def create_app() -> FastAPI:
         await collector.stop()
         await db.close()
 
-    app = FastAPI(title="Slate", docs_url=None, redoc_url=None, lifespan=lifespan)
+    app = FastAPI(title="Amnezia Usage Dashboard", docs_url=None, redoc_url=None, lifespan=lifespan)
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.secret_key,

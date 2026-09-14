@@ -1,10 +1,10 @@
-# Slate
+# Amnezia Usage Dashboard
 
-A small **AmneziaWG** dashboard: who is online, how much they transferred, history, and optional traffic quotas.
+A small dashboard for **AmneziaWG**: who is online, how much they transferred, history, and optional traffic quotas.
 
 Built for a single VPS and a handful of peers. FastAPI + SQLite, one Docker Compose file, no extra monitoring stack.
 
-[English](#slate) · [Русский](#русский)
+[English](#amnezia-usage-dashboard) · [Русский](#русский)
 
 ![Overview](docs/screenshots/overview.png)
 
@@ -33,11 +33,11 @@ Demo data (`phone`, `laptop`, `tablet`, `work`) — not a real VPN.
 
 ## Quick start (VPS)
 
-AmneziaWG should already be running in Docker. Slate talks to that container through a **socket proxy** (not a raw `docker.sock` mount).
+AmneziaWG should already be running in Docker. The dashboard talks to that container through a **socket proxy** (not a raw `docker.sock` mount).
 
 ```bash
-git clone https://github.com/meledinalexander/amnezia-slate.git
-cd amnezia-slate
+git clone https://github.com/meledinalexander/amnezia-usage-dashboard.git
+cd amnezia-usage-dashboard
 cp .env.example .env
 # set ADMIN_PASSWORD, SECRET_KEY, AWG_CONTAINER
 docker ps --format '{{.Names}}' | grep -iE 'awg|amnezia'
@@ -88,7 +88,7 @@ MIT
 
 ## Русский
 
-Лёгкая панель статистики для **AmneziaWG**: кто онлайн, сколько скачал и отдал, история, квоты с авто-отключением.
+**Amnezia Usage Dashboard** — лёгкая панель статистики для **AmneziaWG**: кто онлайн, сколько скачал и отдал, история, квоты с авто-отключением.
 
 Один VPS, десяток клиентов, Docker Compose. Трафик в интерфейсе — **с точки зрения клиента** (Downloaded / Uploaded).
 

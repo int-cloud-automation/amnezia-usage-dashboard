@@ -41,7 +41,7 @@ a:hover {
 
 .shell {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 216px 1fr;
   min-height: 100vh;
 }
 
@@ -55,9 +55,20 @@ a:hover {
 }
 
 .brand {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.brand span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--accent);
 }
 
