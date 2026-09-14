@@ -1,19 +1,23 @@
 # Amnezia Usage Dashboard
 
-A small dashboard for **AmneziaWG**: who is online, how much they transferred, history, and optional traffic quotas.
+Web UI for **AmneziaWG** usage: online peers, download/upload, history, and optional traffic quotas.
 
-Built for a single VPS and a handful of peers. FastAPI + SQLite, one Docker Compose file, no extra monitoring stack.
+It runs next to an existing AmneziaVPN Docker install (one VPS, a handful of clients). Stack: FastAPI, SQLite, Compose. No Prometheus, no Grafana.
 
 ![Overview](docs/screenshots/overview.png)
 
-## What it does
+## About
 
-- **Overview** — live online status, download/upload speed, today / 7 days / month / lifetime totals
-- **Clients** — handshake, lifetime traffic, enable / disable a peer
-- **History** — 7 / 30 / 90 day charts and per-client share
-- **Quotas** — GB cap per day, rolling week, calendar month, or lifetime; auto-disable when exceeded
+The panel reads `awg show` from the AmneziaWG container and stores daily totals in SQLite.
 
-Traffic is shown from the **client's** point of view (downloaded / uploaded). “Online” means a handshake within the last 3 minutes.
+- **Overview** — who is online, current speed, today / last 7 days / this month / lifetime traffic
+- **Clients** — handshake, lifetime counters, enable or disable a peer
+- **History** — 7 / 30 / 90 day charts and each client's share
+- **Quotas** — GB limit per day, rolling week, calendar month, or lifetime; auto-disable when exceeded
+
+Numbers are from the **client's** side (downloaded / uploaded). A peer is online if the last handshake is within 3 minutes.
+
+You can put the UI on a public hostname (HTTPS via Caddy/Cloudflare) or keep it on the LAN / the VPN only.
 
 ## Screenshots
 
@@ -111,11 +115,16 @@ ufw allow from 192.168.0.0/16 to any port 8080 proto tcp
 | Connected to this AmneziaWG | `http://10.8.1.1:8080` (use the VPN server address from your client config if it is not `10.8.1.1`) |
 | Only this machine | `http://127.0.0.1:8080` |
 
-If the host has both a public IP and a LAN IP, bind the published port to the private address only. In `docker-compose.lan.yml`:
+If the host has both a public IP and a LAN IP, publish 8080 only on the **LAN address of this machine** — not `192.168.1.10`, that was just a dummy. Look it up, then put *your* address in `docker-compose.lan.yml`:
+
+```bash
+hostname -I
+# example output:  192.168.0.42  10.8.1.1
+```
 
 ```yaml
 ports:
-  - "192.168.1.10:8080:8080"
+  - "<LAN_IP>:8080:8080"    # e.g. "192.168.0.42:8080:8080"
 ```
 
 Do not point a public DNS name at this port. Do not open 80/443 for the dashboard.

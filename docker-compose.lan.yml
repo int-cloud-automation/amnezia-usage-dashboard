@@ -2,9 +2,10 @@
 # Usage:
 #   docker compose -f docker-compose.yml -f docker-compose.lan.yml up -d --build
 #
-# Bind to a private address if the host also has a public NIC, for example:
+# Optional: bind to this host's LAN IP only (not a dummy like 192.168.1.10).
+#   hostname -I
 #   ports:
-#     - "192.168.1.10:8080:8080"
+#     - "<LAN_IP>:8080:8080"
 
 services:
   awg-stats:
