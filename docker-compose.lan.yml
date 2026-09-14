@@ -1,0 +1,18 @@
+# LAN-only overlay: no public hostname, no Caddy, HTTP on port 8080.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.lan.yml up -d --build
+#
+# Bind to a private address if the host also has a public NIC, for example:
+#   ports:
+#     - "192.168.1.10:8080:8080"
+
+services:
+  awg-stats:
+    environment:
+      SESSION_HTTPS_ONLY: "false"
+    ports:
+      - "8080:8080"
+
+  caddy:
+    profiles:
+      - public

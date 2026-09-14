@@ -50,6 +50,14 @@ docker exec <container> awg show all dump
 
 If `awg show all dump` fails, the panel cannot collect stats.
 
+### LAN (no public internet)
+
+Same Docker / AmneziaWG requirements as production, **except** you do not need a domain, Cloudflare, or a public HTTP(S) port.
+
+- The dashboard host must be on the **same private network** as the people who will open it (home/office LAN), **or** reachable only through the AmneziaWG tunnel (for example `10.8.1.1`)
+- A firewall that does **not** forward the dashboard port from the WAN
+- HTTP is enough; set `SESSION_HTTPS_ONLY=false` or login cookies will not stick
+
 ### Local demo (no VPN)
 
 - **Python 3.12+**
@@ -77,6 +85,41 @@ docker compose up -d --build
 
 Do **not** publish port `8080` to the internet. Caddy listens on 80/443; the app stays on the internal Docker network.
 
+## LAN (no public internet)
+
+Use this when the panel should only be opened from your home/office network, or from devices already connected to AmneziaWG — not from the public internet.
+
+1. Copy `.env.example` to `.env` and set `ADMIN_PASSWORD`, `SECRET_KEY`, and `AWG_CONTAINER` as in the VPS steps.
+2. Set `SESSION_HTTPS_ONLY=false` (the overlay below also sets this).
+3. Start **without** Caddy:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.lan.yml up -d --build
+```
+
+4. On the server, do **not** forward this port from the WAN. With a default-deny firewall it is enough to allow the LAN (adjust the subnet):
+
+```bash
+ufw allow from 192.168.0.0/16 to any port 8080 proto tcp
+```
+
+5. Open the panel:
+
+| From | URL |
+|---|---|
+| Same LAN | `http://<lan-ip>:8080` (run `hostname -I` on the host) |
+| Connected to this AmneziaWG | `http://10.8.1.1:8080` (use the VPN server address from your client config if it is not `10.8.1.1`) |
+| Only this machine | `http://127.0.0.1:8080` |
+
+If the host has both a public IP and a LAN IP, bind the published port to the private address only. In `docker-compose.lan.yml`:
+
+```yaml
+ports:
+  - "192.168.1.10:8080:8080"
+```
+
+Do not point a public DNS name at this port. Do not open 80/443 for the dashboard.
+
 ## Local demo (no VPN)
 
 ```bash
@@ -103,6 +146,7 @@ Open http://127.0.0.1:8080 — user `admin`, password `demo`.
 | `AWG_CONF_PATH` / `AWG_CLIENTS_TABLE` | Paths *inside* that container |
 | `STATS_TIMEZONE` | IANA zone for “today” and quota periods (`UTC`, `Europe/Moscow`, …) |
 | `ONLINE_THRESHOLD_SEC` | Handshake age that still counts as online (default 180) |
+| `SESSION_HTTPS_ONLY` | `true` behind HTTPS; **`false` for HTTP on a LAN** |
 
 ## Security notes
 
