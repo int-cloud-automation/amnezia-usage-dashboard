@@ -11,6 +11,14 @@ function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
 }
 
+function statusBadge(c) {
+  if (c.disabled) return `<span class="badge off">disabled</span>`;
+  const st = c.status || (c.online ? "online" : "offline");
+  if (st === "online") return `<span class="badge on">online</span>`;
+  if (st === "idle") return `<span class="badge idle">idle</span>`;
+  return `<span class="badge">offline</span>`;
+}
+
 function fmtBytes(n) {
   n = Number(n) || 0;
   const u = ["B", "KB", "MB", "GB", "TB"];

@@ -20,6 +20,7 @@ class PeerSnapshot:
     rx: int
     tx: int
     online: bool
+    status: str  # online | idle | offline
 
 
 @dataclass
@@ -85,6 +86,28 @@ def _looks_like_key(value: str) -> bool:
     return value.endswith("=") and len(value) >= 40
 
 
+def connection_status(
+    handshake: int, now_ts: int, *, idle_sec: int, active_sec: int = 180
+) -> tuple[bool, str]:
+    """WireGuard has no session flag — only last handshake.
+
+    Mobile clients often leave PersistentKeepalive off, so an idle phone with
+    the VPN still toggled on can go minutes without a handshake. Treat a
+    recent handshake as *online*, a slightly older one as *idle* (still up),
+    and everything else as *offline*.
+    """
+    if handshake <= 0:
+        return False, "offline"
+    age = now_ts - handshake
+    if age < 0:
+        return True, "online"
+    if age <= active_sec:
+        return True, "online"
+    if age <= idle_sec:
+        return True, "idle"
+    return False, "offline"
+
+
 def parse_awg_dump(
     dump: str,
     name_map: dict[str, str],
@@ -142,7 +165,9 @@ def parse_awg_dump(
         except ValueError:
             rx, tx = 0, 0
 
-        online = handshake > 0 and (now_ts - handshake) <= online_threshold_sec
+        online, status = connection_status(
+            handshake, now_ts, idle_sec=online_threshold_sec
+        )
         name = name_map.get(public_key) or public_key[:8]
         peers.append(
             PeerSnapshot(
@@ -154,6 +179,7 @@ def parse_awg_dump(
                 rx=rx,
                 tx=tx,
                 online=online,
+                status=status,
             )
         )
     return peers

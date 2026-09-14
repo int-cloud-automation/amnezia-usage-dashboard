@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     scrape_interval_sec: int = 60  # write traffic history / quotas
     online_poll_sec: int = 30  # cheap awg show for fresh Overview
-    online_threshold_sec: int = 180
+    online_threshold_sec: int = 900  # idle phone with VPN still on
     name_cache_ttl_sec: int = 300
     database_path: str = "/data/awg_stats.db"
     # Calendar days (Today / DAU / quota periods) are bucketed in this zone.

@@ -215,6 +215,10 @@ a:hover {
   background: var(--danger);
 }
 
+.dot.idle {
+  background: var(--accent);
+}
+
 table.data {
   width: 100%;
   border-collapse: collapse;
@@ -339,6 +343,11 @@ select:focus {
 .badge.off {
   color: var(--danger);
   border-color: rgba(232, 93, 76, 0.35);
+}
+
+.badge.idle {
+  color: var(--accent);
+  border-color: var(--accent-dim);
 }
 
 .error-banner {

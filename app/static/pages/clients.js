@@ -8,11 +8,7 @@ async function load() {
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((c) => {
-      const status = c.disabled
-        ? `<span class="badge off">disabled</span>`
-        : c.online
-          ? `<span class="badge on">online</span>`
-          : `<span class="badge">offline</span>`;
+      const status = statusBadge(c);
       const action = c.disabled
         ? `<button class="btn sm" data-act="enable" data-key="${esc(c.public_key)}">Enable</button>`
         : `<button class="btn sm danger" data-act="disable" data-key="${esc(c.public_key)}">Disable</button>`;

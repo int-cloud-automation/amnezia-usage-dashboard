@@ -129,6 +129,7 @@ def create_app() -> FastAPI:
                         "lifetime_rx": st["lifetime_rx"],
                         "lifetime_tx": st["lifetime_tx"],
                         "online": False,
+                        "status": "offline",
                         "disabled": bool(st["disabled"]),
                         "rx_bps": 0,
                         "tx_bps": 0,

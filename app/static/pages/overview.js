@@ -27,7 +27,7 @@ async function load() {
       ? online
           .map(
             (c) =>
-              `<li><span><span class="dot on"></span>${esc(c.name)}</span><span class="muted">${handshakeAgo(c.handshake)}</span></li>`
+              `<li><span><span class="dot ${c.status === "idle" ? "idle" : "on"}"></span>${esc(c.name)}</span><span class="muted">${c.status === "idle" ? "idle · " : ""}${handshakeAgo(c.handshake)}</span></li>`
           )
           .join("")
       : `<li class="muted">Nobody online</li>`;
@@ -39,16 +39,11 @@ async function load() {
           b.lifetime_rx + b.lifetime_tx - (a.lifetime_rx + a.lifetime_tx)
       )
       .map((c) => {
-        const status = c.disabled
-          ? `<span class="badge off">disabled</span>`
-          : c.online
-            ? `<span class="badge on">online</span>`
-            : `<span class="badge">offline</span>`;
-        const down = c.online ? fmtRate(c.down_bps) : "—";
-        const up = c.online ? fmtRate(c.up_bps) : "—";
+        const down = c.status === "online" ? fmtRate(c.down_bps) : "—";
+        const up = c.status === "online" ? fmtRate(c.up_bps) : "—";
         return `<tr>
           <td>${esc(c.name)}</td>
-          <td>${status}</td>
+          <td>${statusBadge(c)}</td>
           <td>${down}</td>
           <td>${up}</td>
           <td>${fmtBytes(c.lifetime_tx)}</td>

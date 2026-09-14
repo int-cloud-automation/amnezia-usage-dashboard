@@ -15,7 +15,7 @@ The panel reads `awg show` from the AmneziaWG container and stores daily totals 
 - **History** — 7 / 30 / 90 day charts and each client's share
 - **Quotas** — GB limit per day, rolling week, calendar month, or lifetime; auto-disable when exceeded
 
-Numbers are from the **client's** side (downloaded / uploaded). A peer is online if the last handshake is within 3 minutes.
+Numbers are from the **client's** side (downloaded / uploaded). **Online** means a handshake in the last 3 minutes; **idle** means the VPN is likely still up (no recent packets, up to 15 minutes). WireGuard has no better signal when PersistentKeepalive is off.
 
 You can put the UI on a public hostname (HTTPS via Caddy/Cloudflare) or keep it on the LAN / the VPN only.
 
@@ -163,7 +163,7 @@ Open http://127.0.0.1:8080 — user `admin`, password `demo`.
 | `AWG_CONTAINER` | AmneziaWG container name. **Do not rename** the live Amnezia container |
 | `AWG_CONF_PATH` / `AWG_CLIENTS_TABLE` | Paths *inside* that container |
 | `STATS_TIMEZONE` | IANA zone for “today” and quota periods (`UTC`, `Europe/Moscow`, …) |
-| `ONLINE_THRESHOLD_SEC` | Handshake age that still counts as online (default 180) |
+| `ONLINE_THRESHOLD_SEC` | Handshake age still counted as connected / idle (default 900) |
 | `SESSION_HTTPS_ONLY` | `true` behind HTTPS; **`false` for HTTP on a LAN** |
 
 ## Security notes

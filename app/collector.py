@@ -91,6 +91,7 @@ class Collector:
             "rx": peer.rx,
             "tx": peer.tx,
             "online": peer.online,
+            "status": peer.status,
             # Server RX = client upload; server TX = client download.
             "rx_bps": round(rx_bps, 1),
             "tx_bps": round(tx_bps, 1),
