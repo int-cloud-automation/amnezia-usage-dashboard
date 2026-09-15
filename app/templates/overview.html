@@ -13,6 +13,39 @@
   <div class="metric"><div class="label">This month</div><div class="value" id="m-month">—</div></div>
   <div class="metric"><div class="label">All time</div><div class="value" id="m-total">—</div></div>
 </div>
+<section class="panel performance-panel">
+  <h2>Performance</h2>
+  <div class="perf-grid">
+    <div class="perf-card">
+      <div class="perf-title">VPS</div>
+      <div class="perf-row">
+        <div class="perf-label">CPU</div>
+        <div class="perf-value" id="perf-host-cpu">—</div>
+      </div>
+      <div class="bar"><i id="perf-host-cpu-bar"></i></div>
+      <div class="perf-row">
+        <div class="perf-label">Memory</div>
+        <div class="perf-value" id="perf-host-mem">—</div>
+      </div>
+      <div class="bar"><i id="perf-host-mem-bar"></i></div>
+      <p class="muted perf-caption">whole server</p>
+    </div>
+    <div class="perf-card">
+      <div class="perf-title">AmneziaWG</div>
+      <div class="perf-row">
+        <div class="perf-label">CPU</div>
+        <div class="perf-value" id="perf-awg-cpu">—</div>
+      </div>
+      <div class="bar"><i id="perf-awg-cpu-bar"></i></div>
+      <div class="perf-row">
+        <div class="perf-label">Memory</div>
+        <div class="perf-value" id="perf-awg-mem">—</div>
+      </div>
+      <div class="bar"><i id="perf-awg-mem-bar"></i></div>
+      <p class="muted perf-caption" id="perf-awg-caption">container</p>
+    </div>
+  </div>
+</section>
 <div class="grid-2">
   <section class="panel">
     <h2>Traffic · 30 days</h2>

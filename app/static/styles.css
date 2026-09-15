@@ -291,6 +291,166 @@ table.data tr:last-child td {
   height: 100%;
   background: var(--accent);
   width: 0%;
+  transition: width 0.35s ease;
+}
+
+.performance-panel .bar > i {
+  background: var(--online);
+}
+
+.bar > i.warn {
+  background: var(--accent);
+}
+
+.bar > i.hot {
+  background: var(--danger);
+}
+
+.htop-panel {
+  margin-bottom: 12px;
+}
+
+.performance-panel {
+  margin-bottom: 12px;
+}
+
+.perf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.perf-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.perf-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.perf-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.perf-label {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.perf-value {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.perf-card .bar {
+  margin-bottom: 14px;
+}
+
+.perf-caption {
+  margin: 0;
+  font-size: 12px;
+}
+
+.htop-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.htop-head h2 {
+  margin: 0;
+}
+
+.htop {
+  background: #0f1520;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow: auto;
+}
+
+.htop-meters {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.htop-k {
+  display: inline-block;
+  min-width: 4.5em;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.htop-meter {
+  color: var(--online);
+  white-space: pre;
+}
+
+.htop-n {
+  font-variant-numeric: tabular-nums;
+}
+
+.htop-awg {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+
+.htop-table-wrap {
+  overflow-x: auto;
+}
+
+.htop-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.htop-table th,
+.htop-table td {
+  text-align: left;
+  padding: 3px 8px 3px 0;
+  white-space: nowrap;
+}
+
+.htop-table th {
+  color: var(--muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+
+.htop-table td {
+  border-bottom: 1px solid rgba(44, 58, 80, 0.45);
+}
+
+.htop-table tr.htop-hi td {
+  color: var(--accent);
+}
+
+.htop-cmd {
+  max-width: 42vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .btn {
@@ -527,6 +687,10 @@ select:focus {
   }
 
   .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .perf-grid {
     grid-template-columns: 1fr;
   }
 

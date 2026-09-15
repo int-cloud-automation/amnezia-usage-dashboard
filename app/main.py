@@ -26,7 +26,7 @@ from .db import Database
 log = logging.getLogger("awg-stats")
 
 BASE_DIR = Path(__file__).resolve().parent
-ASSET_VERSION = "8"
+ASSET_VERSION = "12"
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["asset_v"] = ASSET_VERSION
 
@@ -211,6 +211,12 @@ def create_app() -> FastAPI:
             request, "history.html", {"active": "history"}
         )
 
+    @app.get("/performance", response_class=HTMLResponse)
+    async def performance_page(request: Request, _: PageAuthDep):
+        return templates.TemplateResponse(
+            request, "performance.html", {"active": "performance"}
+        )
+
     @app.get("/quotas", response_class=HTMLResponse)
     async def quotas_page(request: Request, _: PageAuthDep):
         return templates.TemplateResponse(
@@ -239,6 +245,7 @@ def create_app() -> FastAPI:
             ),
             "clients": clients,
             "series": await db.daily_series(30),
+            "performance": collector.performance.latest,
             "collector": {
                 "last_ok_at": collector.last_ok_at.isoformat()
                 if collector.last_ok_at
@@ -248,6 +255,11 @@ def create_app() -> FastAPI:
                 "timezone": settings.stats_timezone,
             },
         }
+
+    @app.get("/api/htop")
+    async def api_htop(_: SessionDep):
+        # Live snapshot for the Overview htop panel (~1s client poll).
+        return await collector.performance.refresh()
 
     @app.get("/api/history")
     async def api_history(_: SessionDep, days: int = 30):

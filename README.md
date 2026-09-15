@@ -10,10 +10,11 @@ It runs next to an existing AmneziaVPN Docker install (one VPS, a handful of cli
 
 The panel reads `awg show` from the AmneziaWG container and stores daily totals in SQLite.
 
-- **Overview** — who is online, current speed, today / last 7 days / this month / lifetime traffic
+- **Overview** — who is online, VPS / AmneziaWG load, current speed, today / last 7 days / this month / lifetime traffic
 - **Clients** — handshake, lifetime counters, enable or disable a peer
 - **History** — 7 / 30 / 90 day charts and each client's share
 - **Quotas** — GB limit per day, rolling week, calendar month, or lifetime; auto-disable when exceeded
+- **Performance** — live htop-style host CPU (per core), memory, and top processes
 
 Numbers are from the **client's** side (downloaded / uploaded). **Online** means a handshake in the last 3 minutes; **idle** means the VPN is likely still up (no recent packets, up to 15 minutes). WireGuard has no better signal when PersistentKeepalive is off.
 
@@ -40,7 +41,9 @@ Demo data (`phone`, `laptop`, `tablet`, `work`) — not a real VPN.
 |---|---|
 | ![Clients](docs/screenshots/clients.png) | ![History](docs/screenshots/history.png) |
 
-![Quotas](docs/screenshots/quotas.png)
+| Quotas | Performance |
+|---|---|
+| ![Quotas](docs/screenshots/quotas.png) | ![Performance](docs/screenshots/performance.png) |
 
 ## Prerequisites
 

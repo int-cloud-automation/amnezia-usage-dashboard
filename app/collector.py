@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from .awg import AwgClient, PeerSnapshot
 from .config import Settings
 from .db import Database
+from .performance import PerformanceMonitor
 
 log = logging.getLogger("awg-stats.collector")
 
@@ -19,6 +20,7 @@ class Collector:
         self.settings = settings
         self.db = db
         self.awg = awg
+        self.performance = PerformanceMonitor(settings)
         self._task: asyncio.Task | None = None
         self.last_error: str | None = None
         self.last_ok_at: datetime | None = None
@@ -139,6 +141,7 @@ class Collector:
 
         self.latest_peers = latest
         self.last_ok_at = now
+        await self.performance.refresh()
         if should_persist:
             if self.settings.awg_mode == "demo":
                 await self._seed_demo_history(result.peers)

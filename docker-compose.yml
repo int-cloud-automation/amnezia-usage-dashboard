@@ -59,8 +59,11 @@ services:
       ONLINE_THRESHOLD_SEC: ${ONLINE_THRESHOLD_SEC:-900}
       STATS_TIMEZONE: ${STATS_TIMEZONE:-UTC}
       DATABASE_PATH: /data/awg_stats.db
+      HOST_PROC_PATH: /host/proc
     volumes:
       - awg_stats_data:/data
+      # Host CPU / memory via /proc (read-only)
+      - /proc:/host/proc:ro
     depends_on:
       - docker-socket-proxy
     expose:

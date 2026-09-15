@@ -2,6 +2,48 @@ let chart;
 let timer;
 const REFRESH_MS = 30000;
 
+function setBar(el, pct) {
+  if (!el) return;
+  const n = Math.max(0, Math.min(100, Number(pct) || 0));
+  el.style.width = `${n.toFixed(1)}%`;
+  el.classList.toggle("warn", n >= 70 && n < 90);
+  el.classList.toggle("hot", n >= 90);
+}
+
+function fmtPct(n) {
+  if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+  return `${Number(n).toFixed(1)}%`;
+}
+
+function fmtMemPair(used, total) {
+  if (used == null || total == null) return "—";
+  return `${fmtBytes(used)} / ${fmtBytes(total)}`;
+}
+
+function renderPerformance(perf) {
+  const host = (perf && perf.host) || {};
+  const awg = (perf && perf.amnezia) || {};
+  document.getElementById("perf-host-cpu").textContent = fmtPct(host.cpu_pct);
+  document.getElementById("perf-host-mem").textContent = fmtMemPair(
+    host.mem_used_bytes,
+    host.mem_total_bytes
+  );
+  setBar(document.getElementById("perf-host-cpu-bar"), host.cpu_pct);
+  setBar(document.getElementById("perf-host-mem-bar"), host.mem_pct);
+
+  document.getElementById("perf-awg-cpu").textContent = fmtPct(awg.cpu_pct);
+  document.getElementById("perf-awg-mem").textContent =
+    awg.mem_used_bytes != null ? fmtBytes(awg.mem_used_bytes) : "—";
+  setBar(document.getElementById("perf-awg-cpu-bar"), awg.cpu_pct);
+  setBar(document.getElementById("perf-awg-mem-bar"), awg.mem_pct);
+  const cap = document.getElementById("perf-awg-caption");
+  if (cap) {
+    cap.textContent = awg.container
+      ? `container ${awg.container}`
+      : "container";
+  }
+}
+
 async function load() {
   if (document.hidden) return;
   try {
@@ -15,6 +57,7 @@ async function load() {
     document.getElementById("m-week").textContent = fmtBytes(data.week_bytes);
     document.getElementById("m-month").textContent = fmtBytes(data.month_bytes);
     document.getElementById("m-total").textContent = fmtBytes(data.total_bytes);
+    renderPerformance(data.performance);
 
     const byStatus = (a, b) => {
       const rank = (c) => {

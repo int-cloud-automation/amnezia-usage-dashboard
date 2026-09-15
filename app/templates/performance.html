@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Performance · Amnezia Usage Dashboard{% endblock %}
+{% block content %}
+<div class="topbar">
+  <h1>Performance</h1>
+  <div class="meta" id="htop-meta">live 1s</div>
+</div>
+<section class="panel htop-panel">
+  <h2>htop</h2>
+  <div class="htop" id="htop" aria-live="polite">
+    <div class="muted">loading…</div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/pages/performance.js?v={{ asset_v }}" defer></script>
+{% endblock %}

@@ -40,6 +40,11 @@ def main() -> None:
         page.wait_for_timeout(600)
         page.screenshot(path=str(OUT / "quotas.png"), full_page=True)
 
+        page.goto(f"{BASE}/performance", wait_until="networkidle")
+        page.wait_for_selector("#htop .htop-meters")
+        page.wait_for_timeout(1500)
+        page.screenshot(path=str(OUT / "performance.png"), full_page=True)
+
         browser.close()
 
 
