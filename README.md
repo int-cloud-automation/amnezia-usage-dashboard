@@ -1,33 +1,79 @@
 # Amnezia Usage Dashboard
 
-Web UI for **AmneziaWG** usage: online peers, download/upload, history, and optional traffic quotas.
+Web panel for an existing **AmneziaWG** server: who is online, how much traffic each client used, history charts, optional quotas, and live VPS load.
 
-It runs next to an existing AmneziaVPN Docker install (one VPS, a handful of clients). Stack: FastAPI, SQLite, Compose. No Prometheus, no Grafana.
+Runs in Docker **next to** AmneziaVPN. It does **not** replace Amnezia and does **not** rename your VPN container.
 
 ![Overview](docs/screenshots/overview.png)
 
-## About
+## What you get
 
-The panel reads `awg show` from the AmneziaWG container and stores daily totals in SQLite.
+| Page | What it shows |
+|---|---|
+| **Overview** | Online clients, speeds, today / 7 days / month / lifetime traffic, VPS + AmneziaWG CPU/RAM |
+| **Clients** | Handshake age, lifetime counters, enable / disable a peer |
+| **History** | 7 / 30 / 90 day charts and each client’s share |
+| **Quotas** | GB cap per day, rolling week, calendar month, or lifetime (auto-disable when exceeded) |
+| **Performance** | Live htop-style per-core CPU, memory, AmneziaWG container, top processes |
 
-- **Overview** — who is online, VPS / AmneziaWG load, current speed, today / last 7 days / this month / lifetime traffic
-- **Clients** — handshake, lifetime counters, enable or disable a peer
-- **History** — 7 / 30 / 90 day charts and each client's share
-- **Quotas** — GB limit per day, rolling week, calendar month, or lifetime; auto-disable when exceeded
-- **Performance** — live htop-style host CPU (per core), memory, and top processes
+Traffic numbers are from the **client’s** view (download / upload).
 
-Numbers are from the **client's** side (downloaded / uploaded). **Online** means a handshake in the last 3 minutes; **idle** means the VPN is likely still up (no recent packets, up to 15 minutes). WireGuard has no better signal when PersistentKeepalive is off.
+Status (hardcoded + config — not guessed):
 
-You can put the UI on a public hostname (HTTPS via Caddy/Cloudflare) or keep it on the LAN / the VPN only.
+- **online** — last handshake ≤ **3 minutes**
+- **idle** — handshake older than 3 minutes, but ≤ `ONLINE_THRESHOLD_SEC` (default **15 minutes**)
+- **offline** — older than that
 
-## Install with an AI
+WireGuard has no real “session” flag when PersistentKeepalive is off; that is why **idle** exists.
 
-> [!IMPORTANT]
-> Give any coding agent (Cursor, Codex, Claude, …) **shell access to the Amnezia host** and:
->
-> **Follow [`AGENT_INSTALL.md`](AGENT_INSTALL.md).**
->
-> It finds the AmneziaWG container, generates secrets, and starts Docker Compose. Default is LAN-only (not the public internet). Do **not** rename the Amnezia container.
+## Install (recommended)
+
+On the **same Linux VPS** where AmneziaWG already runs:
+
+```bash
+git clone https://github.com/int-cloud-automation/amnezia-usage-dashboard.git
+cd amnezia-usage-dashboard
+chmod +x install.sh
+./install.sh
+```
+
+`install.sh` will:
+
+1. Find a running AmneziaWG container (`awg show all dump`) — **never renames it**
+2. Create `.env` with a random admin password and `SECRET_KEY`
+3. Set timezone from the host (`timedatectl`, else `UTC`)
+4. Start Docker Compose in **LAN mode** (HTTP on port **8080**)
+5. Print the login URL and password once
+
+### LAN / VPN only (default)
+
+```bash
+./install.sh --lan
+```
+
+Then open:
+
+| From | URL |
+|---|---|
+| Same machine | `http://127.0.0.1:8080` |
+| Same LAN | `http://<server-lan-ip>:8080` |
+| Connected to this AmneziaWG | `http://<vpn-server-ip>:8080` (often `10.8.1.1` — check your client config) |
+
+Do **not** forward port 8080 from the public internet.
+
+### Public HTTPS (domain + Caddy)
+
+Only if you already have a DNS name pointing at this VPS:
+
+```bash
+./install.sh --public --hostname stats.example.com
+```
+
+Opens `https://stats.example.com`. Port 8080 stays internal; Caddy listens on 80/443.
+
+### Install with an AI
+
+Give the agent shell access on the Amnezia host and point it at [`AGENT_INSTALL.md`](AGENT_INSTALL.md) (it runs `install.sh`).
 
 ## Screenshots
 
@@ -45,114 +91,50 @@ Demo data (`phone`, `laptop`, `tablet`, `work`) — not a real VPN.
 |---|---|
 | ![Quotas](docs/screenshots/quotas.png) | ![Performance](docs/screenshots/performance.png) |
 
-## Prerequisites
+## Requirements
 
-### Production (same VPS as the VPN)
+- Linux host with **AmneziaWG already running in Docker**
+- **Docker Engine** + **Compose v2** (`docker compose version`)
+- Outbound HTTPS to pull images
+- For public mode only: a **DNS name** for this VPS
 
-- A Linux VPS where **[AmneziaVPN](https://github.com/amnezia-vpn/amnezia-client)** is already installed and **AmneziaWG** is running in Docker
-- **Docker Engine 24+** with **Compose v2** (`docker compose version`)
-- Permission to use the Docker socket (root, or a user in the `docker` group)
-- The AmneziaWG container name (find it with the command below — **do not rename** that container; the Amnezia desktop app depends on the original name)
-- Outbound HTTPS from the VPS (to pull images)
-- A **domain name** pointed at the VPS if you want HTTPS in a browser
-- A reverse proxy in front of the panel (Caddy is included). For Cloudflare orange-cloud, restrict ports 80/443 to [Cloudflare IP ranges](https://www.cloudflare.com/ips/)
-
-AmneziaWG UDP/TCP VPN ports are not used by this dashboard and must stay reachable as they are today.
+Check AmneziaWG is readable:
 
 ```bash
 docker ps --format '{{.Names}}' | grep -iE 'awg|amnezia'
 docker exec <container> awg show all dump
 ```
 
-If `awg show all dump` fails, the panel cannot collect stats.
+If `awg show all dump` fails, the dashboard cannot collect stats. **Do not rename** the Amnezia container — the Amnezia desktop app depends on the original name.
 
-### LAN (no public internet)
-
-Same Docker / AmneziaWG requirements as production, **except** you do not need a domain, Cloudflare, or a public HTTP(S) port.
-
-- The dashboard host must be on the **same private network** as the people who will open it (home/office LAN), **or** reachable only through the AmneziaWG tunnel (for example `10.8.1.1`)
-- A firewall that does **not** forward the dashboard port from the WAN
-- HTTP is enough; set `SESSION_HTTPS_ONLY=false` or login cookies will not stick
-
-### Local demo (no VPN)
-
-- **Python 3.12+**
-- `pip` and `venv`
-
-## Quick start (VPS)
+## Manual start (if you skip install.sh)
 
 ```bash
-git clone https://github.com/meledinalexander/amnezia-usage-dashboard.git
-cd amnezia-usage-dashboard
 cp .env.example .env
+# set ADMIN_PASSWORD, SECRET_KEY, AWG_CONTAINER, STATS_TIMEZONE
+# LAN:
+#   SESSION_HTTPS_ONLY=false
+docker compose -f docker-compose.yml -f docker-compose.lan.yml up -d --build
 ```
 
-Edit `.env`:
-
-1. Set a strong `ADMIN_PASSWORD` and a long random `SECRET_KEY`
-2. Set `AWG_CONTAINER` to the name from `docker ps` (often `amnezia-awg2`)
-3. Set `STATS_TIMEZONE` to your IANA zone if you do not want UTC day boundaries (`Europe/Moscow`, `Asia/Yekaterinburg`, …)
-
-Edit `Caddyfile`: replace `stats.example.com` with your hostname.
+Public (edit `Caddyfile` hostname first):
 
 ```bash
 docker compose up -d --build
 ```
 
-Do **not** publish port `8080` to the internet. Caddy listens on 80/443; the app stays on the internal Docker network.
+## Local demo (no VPN, for screenshots / UI)
 
-## LAN (no public internet)
-
-Use this when the panel should only be opened from your home/office network, or from devices already connected to AmneziaWG — not from the public internet.
-
-1. Copy `.env.example` to `.env` and set `ADMIN_PASSWORD`, `SECRET_KEY`, and `AWG_CONTAINER` as in the VPS steps.
-2. Set `SESSION_HTTPS_ONLY=false` (the overlay below also sets this).
-3. Start **without** Caddy:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.lan.yml up -d --build
-```
-
-4. On the server, do **not** forward this port from the WAN. With a default-deny firewall it is enough to allow the LAN (adjust the subnet):
-
-```bash
-ufw allow from 192.168.0.0/16 to any port 8080 proto tcp
-```
-
-5. Open the panel:
-
-| From | URL |
-|---|---|
-| Same LAN | `http://<lan-ip>:8080` (run `hostname -I` on the host) |
-| Connected to this AmneziaWG | `http://10.8.1.1:8080` (use the VPN server address from your client config if it is not `10.8.1.1`) |
-| Only this machine | `http://127.0.0.1:8080` |
-
-If the host has both a public IP and a LAN IP, publish 8080 only on the **LAN address of this machine** — not `192.168.1.10`, that was just a dummy. Look it up, then put *your* address in `docker-compose.lan.yml`:
-
-```bash
-hostname -I
-# example output:  192.168.0.42  10.8.1.1
-```
-
-```yaml
-ports:
-  - "<LAN_IP>:8080:8080"    # e.g. "192.168.0.42:8080:8080"
-```
-
-Do not point a public DNS name at this port. Do not open 80/443 for the dashboard.
-
-## Local demo (no VPN)
+Needs Python 3.12+:
 
 ```bash
 python -m venv .venv
 # Windows: .venv\Scripts\activate
 # Unix:    source .venv/bin/activate
 pip install -r requirements.txt
-export AWG_MODE=demo ADMIN_PASSWORD=demo SECRET_KEY=dev DATABASE_PATH=./data/demo.db
+export AWG_MODE=demo ADMIN_PASSWORD=demo SECRET_KEY=dev DATABASE_PATH=./data/demo.db SESSION_HTTPS_ONLY=false
 uvicorn app.main:app --reload --port 8080
 ```
-
-On Windows PowerShell, set the same variables with `$env:AWG_MODE="demo"` (and so on).
 
 Open http://127.0.0.1:8080 — user `admin`, password `demo`.
 
@@ -162,20 +144,33 @@ Open http://127.0.0.1:8080 — user `admin`, password `demo`.
 |---|---|
 | `ADMIN_USER` / `ADMIN_PASSWORD` | Panel login |
 | `SECRET_KEY` | Session signing key |
-| `AWG_MODE` | `docker_exec` (production) / `local` / `demo` |
-| `AWG_CONTAINER` | AmneziaWG container name. **Do not rename** the live Amnezia container |
+| `AWG_MODE` | `docker_exec` (normal) / `local` / `demo` |
+| `AWG_CONTAINER` | Existing AmneziaWG container name — **do not rename the container** |
 | `AWG_CONF_PATH` / `AWG_CLIENTS_TABLE` | Paths *inside* that container |
 | `STATS_TIMEZONE` | IANA zone for “today” and quota periods (`UTC`, `Europe/Moscow`, …) |
-| `ONLINE_THRESHOLD_SEC` | Handshake age still counted as connected / idle (default 900) |
-| `SESSION_HTTPS_ONLY` | `true` behind HTTPS; **`false` for HTTP on a LAN** |
+| `ONLINE_THRESHOLD_SEC` | Max handshake age for **idle** (default `900`). **Online** is always ≤ 180s in code |
+| `SESSION_HTTPS_ONLY` | `true` behind HTTPS; **`false` for HTTP on LAN** |
+| `HOST_PROC_PATH` | Host `/proc` mount inside the app container (default `/host/proc`) for Performance |
 
 ## Security notes
 
-- Change the password and `SECRET_KEY` before the panel is reachable
-- Prefer Cloudflare Access (or similar) in front of the login form
+- Change password and `SECRET_KEY` before anyone can reach the panel (`install.sh` does this)
+- Prefer an extra gate (Cloudflare Access, VPN-only, LAN firewall) in front of login
 - Quotas remove the peer from the *live* interface; they do not edit `awg0.conf` on disk
 - A peer you disable by hand stays disabled even if a quota would re-enable it
-- The dashboard reaches Docker only through a socket proxy (`exec` / `inspect`), not a raw `docker.sock` mount into the app container
+- The app talks to Docker through a socket proxy (`exec` / `inspect` only), not a raw `docker.sock` mount into the app container
+
+## Stop
+
+```bash
+# LAN install
+docker compose -f docker-compose.yml -f docker-compose.lan.yml down
+
+# Public install
+docker compose down
+```
+
+This does **not** stop AmneziaWG.
 
 ## License
 
