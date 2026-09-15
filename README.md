@@ -71,9 +71,14 @@ Only if you already have a DNS name pointing at this VPS:
 
 Opens `https://stats.example.com`. Port 8080 stays internal; Caddy listens on 80/443.
 
-### Install with an AI
+## Install with an AI
 
-Give the agent shell access on the Amnezia host and point it at [`AGENT_INSTALL.md`](AGENT_INSTALL.md) (it runs `install.sh`).
+> [!IMPORTANT]
+> Give any coding agent (Cursor, Codex, Claude, …) **shell access to the Amnezia host** and:
+>
+> **Follow [`AGENT_INSTALL.md`](AGENT_INSTALL.md).**
+>
+> It runs `install.sh`: finds the AmneziaWG container, generates secrets, and starts Docker Compose. Default is LAN-only (not the public internet). Do **not** rename the Amnezia container.
 
 ## Screenshots
 
