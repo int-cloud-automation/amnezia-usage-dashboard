@@ -6,3 +6,4 @@ itsdangerous==2.2.0
 pydantic-settings==2.7.1
 aiosqlite==0.20.0
 tzdata==2024.2
+bcrypt==4.2.1

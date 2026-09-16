@@ -15,6 +15,7 @@ Runs in Docker **next to** AmneziaVPN. It does **not** replace Amnezia and does 
 | **History** | 7 / 30 / 90 day charts and each client’s share |
 | **Quotas** | GB cap per day, rolling week, calendar month, or lifetime (auto-disable when exceeded) |
 | **Performance** | Live htop-style per-core CPU, memory, AmneziaWG container, top processes |
+| **Account** | Change admin password (bcrypt hash in SQLite; requires current password) |
 
 Traffic numbers are from the **client’s** view (download / upload).
 
@@ -147,7 +148,7 @@ Open http://127.0.0.1:8080 — user `admin`, password `demo`.
 
 | Variable | Meaning |
 |---|---|
-| `ADMIN_USER` / `ADMIN_PASSWORD` | Panel login |
+| `ADMIN_USER` / `ADMIN_PASSWORD` | Panel login. `ADMIN_PASSWORD` seeds a **bcrypt hash** into SQLite on first boot; later changes happen in **Account** |
 | `SECRET_KEY` | Session signing key |
 | `AWG_MODE` | `docker_exec` (normal) / `local` / `demo` |
 | `AWG_CONTAINER` | Existing AmneziaWG container name — **do not rename the container** |
@@ -159,6 +160,7 @@ Open http://127.0.0.1:8080 — user `admin`, password `demo`.
 
 ## Security notes
 
+- On first start the panel hashes `ADMIN_PASSWORD` with **bcrypt** and stores only the hash in SQLite (`admin_auth`). Change the password later under **Account** (requires the current password)
 - Change password and `SECRET_KEY` before anyone can reach the panel (`install.sh` does this)
 - Prefer an extra gate (Cloudflare Access, VPN-only, LAN firewall) in front of login
 - Quotas remove the peer from the *live* interface; they do not edit `awg0.conf` on disk

@@ -16,7 +16,10 @@ from .auth import (
     PageAuthDep,
     SessionDep,
     client_ip,
-    verify_password,
+    hash_password,
+    validate_new_password,
+    verify_password_hash,
+    verify_username,
 )
 from .awg import AwgClient
 from .collector import Collector
@@ -26,7 +29,7 @@ from .db import Database
 log = logging.getLogger("awg-stats")
 
 BASE_DIR = Path(__file__).resolve().parent
-ASSET_VERSION = "12"
+ASSET_VERSION = "13"
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["asset_v"] = ASSET_VERSION
 
@@ -61,6 +64,16 @@ def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         await db.connect()
+        # Bootstrap bcrypt hash from ADMIN_PASSWORD once; later UI changes own the DB.
+        try:
+            if not await db.get_admin_password_hash():
+                await db.ensure_admin_password_hash(
+                    hash_password(settings.admin_password)
+                )
+                log.info("seeded admin password hash from ADMIN_PASSWORD")
+        except Exception:  # noqa: BLE001
+            log.exception("failed to seed admin password hash")
+            raise
         collector.start()
         try:
             await collector.scrape_once()
@@ -171,11 +184,14 @@ def create_app() -> FastAPI:
             return templates.TemplateResponse(
                 request,
                 "login.html",
-                {"error": f"Too many attempts. Try again in {retry_after // 60 + 1} min."},
+                {"error": f"Too many attempts. Try again in {(retry_after + 59) // 60} min."},
                 status_code=429,
                 headers={"Retry-After": str(retry_after)},
             )
-        if verify_password(settings, username, password):
+        stored_hash = await db.get_admin_password_hash()
+        if verify_username(settings, username) and verify_password_hash(
+            password, stored_hash
+        ):
             login_guard.reset(ip)
             request.session["auth"] = True
             return RedirectResponse("/", status_code=303)
@@ -192,6 +208,92 @@ def create_app() -> FastAPI:
     async def logout(request: Request):
         request.session.clear()
         return RedirectResponse("/login", status_code=303)
+
+    @app.get("/account", response_class=HTMLResponse)
+    async def account_page(request: Request, _: PageAuthDep):
+        return templates.TemplateResponse(
+            request,
+            "account.html",
+            {
+                "active": "account",
+                "error": None,
+                "success": None,
+                "admin_user": settings.admin_user,
+            },
+        )
+
+    @app.post("/account/password", response_class=HTMLResponse)
+    async def account_change_password(
+        request: Request,
+        _: PageAuthDep,
+        current_password: str = Form(...),
+        new_password: str = Form(...),
+        confirm_password: str = Form(...),
+    ):
+        ctx = {
+            "active": "account",
+            "error": None,
+            "success": None,
+            "admin_user": settings.admin_user,
+        }
+        ip = client_ip(request)
+        retry_after = login_guard.retry_after(ip)
+        if retry_after:
+            ctx["error"] = (
+                f"Too many attempts. Try again in {(retry_after + 59) // 60} min."
+            )
+            return templates.TemplateResponse(
+                request,
+                "account.html",
+                ctx,
+                status_code=429,
+                headers={"Retry-After": str(retry_after)},
+            )
+
+        stored_hash = await db.get_admin_password_hash()
+        if not verify_password_hash(current_password, stored_hash):
+            login_guard.record_failure(ip)
+            log.warning("failed password change (bad current) from %s", ip)
+            ctx["error"] = "Current password is incorrect."
+            return templates.TemplateResponse(
+                request, "account.html", ctx, status_code=400
+            )
+
+        if new_password != confirm_password:
+            ctx["error"] = "New password and confirmation do not match."
+            return templates.TemplateResponse(
+                request, "account.html", ctx, status_code=400
+            )
+
+        if new_password == current_password:
+            ctx["error"] = "New password must be different from the current one."
+            return templates.TemplateResponse(
+                request, "account.html", ctx, status_code=400
+            )
+
+        policy_error = validate_new_password(new_password)
+        if policy_error:
+            ctx["error"] = policy_error
+            return templates.TemplateResponse(
+                request, "account.html", ctx, status_code=400
+            )
+
+        try:
+            new_hash = hash_password(new_password)
+        except ValueError as exc:
+            ctx["error"] = str(exc)
+            return templates.TemplateResponse(
+                request, "account.html", ctx, status_code=400
+            )
+
+        await db.set_admin_password_hash(new_hash)
+        login_guard.reset(ip)
+        log.info("admin password changed from %s", ip)
+        ctx["success"] = (
+            "Password updated. It is stored as a bcrypt hash in the database "
+            "(not plaintext). ADMIN_PASSWORD in .env is only used for the first boot."
+        )
+        return templates.TemplateResponse(request, "account.html", ctx)
 
     @app.get("/", response_class=HTMLResponse)
     async def overview(request: Request, _: PageAuthDep):

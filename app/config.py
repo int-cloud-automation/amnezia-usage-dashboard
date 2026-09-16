@@ -32,9 +32,9 @@ class Settings(BaseSettings):
     session_max_age_sec: int = 60 * 60 * 24 * 14
     session_https_only: bool = True
 
-    # Brute-force protection on /login
+    # Brute-force protection on /login and password change
     login_max_attempts: int = 5
-    login_lockout_sec: int = 900
+    login_lockout_sec: int = 180  # 3 minutes after 5 failed attempts
 
 
 @lru_cache

@@ -39,6 +39,13 @@ CREATE TABLE IF NOT EXISTS quotas (
     auto_disable INTEGER NOT NULL DEFAULT 1,
     updated_at TEXT NOT NULL
 );
+
+-- Singleton admin credentials. Only a bcrypt hash is stored — never plaintext.
+CREATE TABLE IF NOT EXISTS admin_auth (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    password_hash TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 """
 
 
@@ -344,4 +351,46 @@ class Database:
 
     async def delete_quota(self, public_key: str) -> None:
         await self.db.execute("DELETE FROM quotas WHERE public_key = ?", (public_key,))
+        await self.db.commit()
+
+    async def get_admin_password_hash(self) -> str | None:
+        cur = await self.db.execute(
+            "SELECT password_hash FROM admin_auth WHERE id = 1"
+        )
+        row = await cur.fetchone()
+        if not row:
+            return None
+        value = row["password_hash"]
+        return str(value) if value else None
+
+    async def ensure_admin_password_hash(self, password_hash: str) -> bool:
+        """Seed the bcrypt hash once from the bootstrap env password.
+
+        Returns True if a new row was inserted. Existing hashes are never
+        overwritten from env — UI password changes stay authoritative.
+        """
+        existing = await self.get_admin_password_hash()
+        if existing:
+            return False
+        await self.db.execute(
+            """
+            INSERT INTO admin_auth (id, password_hash, updated_at)
+            VALUES (1, ?, ?)
+            """,
+            (password_hash, datetime.now(timezone.utc).isoformat()),
+        )
+        await self.db.commit()
+        return True
+
+    async def set_admin_password_hash(self, password_hash: str) -> None:
+        await self.db.execute(
+            """
+            INSERT INTO admin_auth (id, password_hash, updated_at)
+            VALUES (1, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                password_hash = excluded.password_hash,
+                updated_at = excluded.updated_at
+            """,
+            (password_hash, datetime.now(timezone.utc).isoformat()),
+        )
         await self.db.commit()

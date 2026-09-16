@@ -1,22 +1,69 @@
 from __future__ import annotations
 
 import hmac
+import re
 import time
 from typing import Annotated
 
+import bcrypt
 from fastapi import Depends, HTTPException, Request, status
 
 from .config import Settings
 
+# bcrypt truncates at 72 bytes; reject longer so behavior is explicit.
+_MAX_PASSWORD_BYTES = 72
+_MIN_PASSWORD_LEN = 10
 
-def verify_password(settings: Settings, username: str, password: str) -> bool:
-    user_ok = hmac.compare_digest(
+
+def hash_password(password: str) -> str:
+    raw = password.encode("utf-8")
+    if len(raw) > _MAX_PASSWORD_BYTES:
+        raise ValueError("password is too long")
+    return bcrypt.hashpw(raw, bcrypt.gensalt(rounds=12)).decode("ascii")
+
+
+def check_password(password: str, password_hash: str) -> bool:
+    try:
+        return bcrypt.checkpw(
+            password.encode("utf-8"),
+            password_hash.encode("ascii"),
+        )
+    except (ValueError, TypeError):
+        return False
+
+
+def validate_new_password(password: str) -> str | None:
+    """Return an error message, or None if the password is acceptable."""
+    if len(password) < _MIN_PASSWORD_LEN:
+        return f"New password must be at least {_MIN_PASSWORD_LEN} characters."
+    if len(password.encode("utf-8")) > _MAX_PASSWORD_BYTES:
+        return "New password is too long."
+    if password.isspace() or not password.strip():
+        return "New password cannot be blank."
+    # Prefer mixed classes without forcing a complex policy.
+    classes = sum(
+        (
+            bool(re.search(r"[a-z]", password)),
+            bool(re.search(r"[A-Z]", password)),
+            bool(re.search(r"\d", password)),
+            bool(re.search(r"[^A-Za-z0-9]", password)),
+        )
+    )
+    if classes < 2:
+        return "Use a mix of letters, numbers, or symbols."
+    return None
+
+
+def verify_username(settings: Settings, username: str) -> bool:
+    return hmac.compare_digest(
         username.encode("utf-8"), settings.admin_user.encode("utf-8")
     )
-    pass_ok = hmac.compare_digest(
-        password.encode("utf-8"), settings.admin_password.encode("utf-8")
-    )
-    return user_ok and pass_ok
+
+
+def verify_password_hash(password: str, password_hash: str | None) -> bool:
+    if not password_hash:
+        return False
+    return check_password(password, password_hash)
 
 
 def client_ip(request: Request) -> str:

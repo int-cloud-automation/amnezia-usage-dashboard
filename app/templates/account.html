@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Account · Amnezia Usage Dashboard{% endblock %}
+{% block content %}
+<div class="topbar">
+  <h1>Account</h1>
+</div>
+{% if error %}
+<div class="error-banner">{{ error }}</div>
+{% endif %}
+{% if success %}
+<div class="ok-banner">{{ success }}</div>
+{% endif %}
+<section class="panel account-panel">
+  <h2>Change password</h2>
+  <p class="muted">Signed in as <strong>{{ admin_user }}</strong>. You must know the current password. The new password is stored as a bcrypt hash in the database — never as plaintext.</p>
+  <form method="post" action="/account/password" class="account-form" autocomplete="off">
+    <label class="field">Current password
+      <input name="current_password" type="password" autocomplete="current-password" required />
+    </label>
+    <label class="field">New password
+      <input name="new_password" type="password" autocomplete="new-password" required minlength="10" />
+    </label>
+    <label class="field">Confirm new password
+      <input name="confirm_password" type="password" autocomplete="new-password" required minlength="10" />
+    </label>
+    <button class="btn primary" type="submit">Update password</button>
+  </form>
+  <p class="muted account-hint">Minimum 10 characters, with a mix of letters / numbers / symbols.</p>
+</section>
+{% endblock %}

@@ -554,6 +554,45 @@ select:focus {
   font-size: 13px;
 }
 
+.ok-banner {
+  background: rgba(62, 207, 142, 0.12);
+  border: 1px solid rgba(62, 207, 142, 0.35);
+  color: #9be7c4;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.account-panel {
+  max-width: 420px;
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.account-form .field {
+  width: 100%;
+}
+
+.account-form input {
+  width: 100%;
+}
+
+.account-form .btn {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.account-hint {
+  margin: 14px 0 0;
+  font-size: 12px;
+}
+
 .login-wrap {
   min-height: 100vh;
   display: grid;
