@@ -447,63 +447,88 @@ def create_app() -> FastAPI:
 
     @app.post("/api/quotas")
     async def api_quotas_upsert(request: Request, _: SessionDep):
-        body = await _json_body(request)
-        public_key = _required_key(body)
-        peer = await db.get_peer(public_key)
-        name = body.get("name") or (peer["name"] if peer else public_key[:8])
-        try:
-            limit_gb = float(body.get("limit_gb", 0))
-        except (TypeError, ValueError):
-            raise HTTPException(status_code=400, detail="limit_gb must be a number")
-        if not limit_gb > 0:
-            raise HTTPException(status_code=400, detail="limit_gb must be > 0")
-        period = body.get("period", "month")
-        if period not in VALID_PERIODS:
-            raise HTTPException(status_code=400, detail="invalid period")
-        await db.upsert_quota(
-            public_key=public_key,
-            name=str(name),
-            limit_bytes=int(limit_gb * 1024**3),
-            period=period,
-            enabled=bool(body.get("enabled", True)),
-            auto_disable=bool(body.get("auto_disable", True)),
-        )
-        return {"ok": True}
+        async with collector._lock:
+            body = await _json_body(request)
+            public_key = _required_key(body)
+            peer = await db.get_peer(public_key)
+            name = body.get("name") or (peer["name"] if peer else public_key[:8])
+            try:
+                limit_gb = float(body.get("limit_gb", 0))
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=400, detail="limit_gb must be a number")
+            if not limit_gb > 0:
+                raise HTTPException(status_code=400, detail="limit_gb must be > 0")
+            period = body.get("period", "month")
+            if period not in VALID_PERIODS:
+                raise HTTPException(status_code=400, detail="invalid period")
+            await db.upsert_quota(
+                public_key=public_key,
+                name=str(name),
+                limit_bytes=int(limit_gb * 1024**3),
+                period=period,
+                enabled=bool(body.get("enabled", True)),
+                auto_disable=bool(body.get("auto_disable", True)),
+            )
+            return {"ok": True}
 
     @app.delete("/api/quotas")
     async def api_quotas_delete(request: Request, _: SessionDep):
-        body = await _json_body(request)
-        await db.delete_quota(_required_key(body))
-        return {"ok": True}
+        async with collector._lock:
+            body = await _json_body(request)
+            public_key = _required_key(body)
+
+            peer = await db.get_peer(public_key)
+
+            if (
+                peer
+                and peer["disabled"]
+                and peer["disabled_by"] == "quota"
+            ):
+                allowed_ips = peer["allowed_ips"]
+                if not allowed_ips:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Cannot restore peer: AllowedIPs unknown",
+                    )
+
+                # Restore before deleting the quota.
+                # enable_peer also restores the original PSK.
+                await awg.enable_peer(public_key, allowed_ips)
+                await db.set_disabled(public_key, False)
+
+            await db.delete_quota(public_key)
+            return {"ok": True}
 
     @app.post("/api/peers/enable")
     async def api_peer_enable(request: Request, _: SessionDep):
-        body = await _json_body(request)
-        public_key = _required_key(body)
-        peer = await db.get_peer(public_key)
-        if not peer:
-            raise HTTPException(status_code=404, detail="peer not found")
-        allowed_ips = peer["allowed_ips"]
-        if not allowed_ips:
-            # A blanket 0.0.0.0/0 here would hijack routing for every peer.
-            raise HTTPException(
-                status_code=409,
-                detail="allowed-ips unknown for this peer; re-add it in Amnezia first",
-            )
-        await awg.enable_peer(public_key, allowed_ips)
-        await db.set_disabled(public_key, False)
-        return {"ok": True}
+        async with collector._lock:
+            body = await _json_body(request)
+            public_key = _required_key(body)
+            peer = await db.get_peer(public_key)
+            if not peer:
+                raise HTTPException(status_code=404, detail="peer not found")
+            allowed_ips = peer["allowed_ips"]
+            if not allowed_ips:
+                # A blanket 0.0.0.0/0 here would hijack routing for every peer.
+                raise HTTPException(
+                    status_code=409,
+                    detail="allowed-ips unknown for this peer; re-add it in Amnezia first",
+                )
+            await awg.enable_peer(public_key, allowed_ips)
+            await db.set_disabled(public_key, False)
+            return {"ok": True}
 
     @app.post("/api/peers/disable")
     async def api_peer_disable(request: Request, _: SessionDep):
-        body = await _json_body(request)
-        public_key = _required_key(body)
-        peer = await db.get_peer(public_key)
-        if not peer:
-            raise HTTPException(status_code=404, detail="peer not found")
-        await awg.disable_peer(public_key)
-        await db.set_disabled(public_key, True, by="manual")
-        return {"ok": True}
+        async with collector._lock:
+            body = await _json_body(request)
+            public_key = _required_key(body)
+            peer = await db.get_peer(public_key)
+            if not peer:
+                raise HTTPException(status_code=404, detail="peer not found")
+            await awg.disable_peer(public_key)
+            await db.set_disabled(public_key, True, by="manual")
+            return {"ok": True}
 
     @app.post("/api/scrape")
     async def api_scrape(_: SessionDep):

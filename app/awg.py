@@ -185,13 +185,18 @@ def parse_awg_dump(
     return peers
 
 
-async def _run(cmd: list[str]) -> str:
+async def _run(cmd: list[str], input_data: bytes | None = None) -> str:
     proc = await asyncio.create_subprocess_exec(
         *cmd,
+        stdin=(
+            asyncio.subprocess.PIPE
+            if input_data is not None
+            else asyncio.subprocess.DEVNULL
+        ),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    stdout, stderr = await proc.communicate()
+    stdout, stderr = await proc.communicate(input=input_data)
     if proc.returncode != 0:
         err = stderr.decode(errors="replace").strip()
         raise RuntimeError(f"Command failed ({proc.returncode}): {' '.join(cmd)}\n{err}")
@@ -321,22 +326,64 @@ class AwgClient:
         await _run(cmd)
 
     async def enable_peer(self, public_key: str, allowed_ips: str) -> None:
-        """Re-add peer to live interface."""
-        iface = self.settings.awg_interface
+        """Restore one peer, including its original preshared key."""
         if self.settings.awg_mode == "demo":
             return
+
+        conf = await self._read_file(self.settings.awg_conf_path)
+        if not conf:
+            raise RuntimeError("AWG configuration unavailable")
+
+        matches = []
+        for section in re.split(r"(?m)^\s*\[Peer\]\s*$", conf)[1:]:
+            fields = {}
+            for line in section.splitlines():
+                line = line.split("#", 1)[0].strip()
+                if "=" in line:
+                    key, value = line.split("=", 1)
+                    fields[key.strip().lower()] = value.strip()
+            if fields.get("publickey") == public_key:
+                matches.append(fields)
+
+        if len(matches) != 1:
+            raise RuntimeError("Expected exactly one matching peer in AWG config")
+
+        peer = matches[0]
+        configured_ips = peer.get("allowedips", "")
+        normalize = lambda value: ",".join(
+            part.strip() for part in value.split(",")
+        )
+
+        if not configured_ips or normalize(configured_ips) != normalize(allowed_ips):
+            raise RuntimeError("Peer AllowedIPs mismatch; refusing restore")
+
+        psk = peer.get("presharedkey")
         set_cmd = [
-            "awg",
-            "set",
-            iface,
-            "peer",
-            public_key,
-            "allowed-ips",
-            allowed_ips,
+            "awg", "set", self.settings.awg_interface,
+            "peer", public_key,
+            "allowed-ips", configured_ips,
         ]
+
+        input_data = None
+        if psk:
+            import base64
+            import binascii
+
+            try:
+                decoded = base64.b64decode(psk, validate=True)
+            except (ValueError, binascii.Error) as exc:
+                raise RuntimeError("Invalid peer PSK encoding") from exc
+            if len(decoded) != 32:
+                raise RuntimeError("Invalid peer PSK length")
+
+            set_cmd.extend(["preshared-key", "/dev/stdin"])
+            input_data = (psk + "\n").encode("ascii")
+
         if self.settings.awg_mode == "docker_exec":
             cmd = await self._docker_base()
+            cmd.insert(2, "-i")
             cmd.extend(set_cmd)
         else:
             cmd = set_cmd
-        await _run(cmd)
+
+        await _run(cmd, input_data=input_data)
